@@ -1,2 +1,2 @@
 # homebrew-cv
-A Tap I use for Computer Vision.
+A Homebrew Tap I use for Computer Vision.
