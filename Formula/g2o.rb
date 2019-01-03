@@ -10,6 +10,8 @@ class G2o < Formula
   depends_on "suite-sparse" => :recommended
   depends_on "qt" => :optional
 
+  needs :cxx11
+
   def install
     args = std_cmake_args
     if build.with? "qt"

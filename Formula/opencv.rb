@@ -1,11 +1,10 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook
-#                http://www.rubydoc.info/github/Homebrew/brew/master/Formula
-# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
+# Build with more contrib modules
+# Build only shared libs
 class Opencv < Formula
   desc "Open Source Computer Vision Library"
   homepage "https://opencv.org"
-  url "https://github.com/opencv/opencv/archive/3.4.3.tar.gz"
-  sha256 "4eef85759d5450b183459ff216b4c0fa43e87a4f6aa92c8af649f89336f002ec"
+  url "https://github.com/opencv/opencv/archive/3.4.5.tar.gz"
+  sha256 "0c57d9dd6d30cbffe68a09b03f4bebe773ee44dc8ff5cd6eaeb7f4d5ef3b428e"
 
   depends_on "cmake" => :build
   depends_on "pkg-config" => :build
@@ -25,10 +24,10 @@ class Opencv < Formula
   if build.with? "vtk"
     depends_on "qt"
   end 
-
+  
   resource "contrib" do
-    url "https://github.com/opencv/opencv_contrib/archive/3.4.3.tar.gz"
-    sha256 "6dfb51326f3dfeb659128df952edecd45683626a965aa4a8e1e9c970c40fb636"
+    url "https://github.com/opencv/opencv_contrib/archive/3.4.5.tar.gz"
+    sha256 "8f73d029887c726fed89c69a2b0fcb1d098099fcd81c1070e1af3b452669fbe2"
   end
 
   needs :cxx11
@@ -72,7 +71,7 @@ class Opencv < Formula
       args = args + %W[
         -DWITH_VTK=ON
         -DWITH_QT=ON
-        -DCMAKE_PREFIX_PATH=/usr/local/opt/qt:#{prefix}
+        -DCMAKE_PREFIX_PATH=#{prefix}/opt/qt
       ]
     end 
     # ENV.deparallelize  # if your formula fails when building in parallel
@@ -84,15 +83,20 @@ class Opencv < Formula
   end
 
   test do
-    # `test do` will create, run in and delete a temporary directory.
-    #
-    # This test will fail and we won't accept that! For Homebrew/homebrew-core
-    # this will need to be a test that verifies the functionality of the
-    # software. Run the test with `brew test opencv`. Options passed
-    # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
-    #
-    # The installed folder is not in the path, so use the entire path to any
-    # executables being tested: `system "#{bin}/program", "do", "something"`.
-    system "false"
+    (testpath/"test.cpp").write <<~EOS
+      #include <opencv/cv.h>
+      #include <iostream>
+      int main() {
+        std::cout << CV_VERSION << std::endl;
+        return 0;
+      }
+    EOS
+    system ENV.cxx, "test.cpp", "-I#{include}", "-L#{lib}", "-o", "test"
+    assert_equal `./test`.strip, version.to_s
+
+    ["python2.7", "python3"].each do |python|
+      output = shell_output("#{python} -c 'import cv2; print(cv2.__version__)'")
+      assert_equal version.to_s, output.chomp
+    end 
   end
 end

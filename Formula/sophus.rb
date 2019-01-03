@@ -1,6 +1,3 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook
-#                http://www.rubydoc.info/github/Homebrew/brew/master/Formula
-# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 class Sophus < Formula
   desc "C++ implementation of Lie Groups using Eigen."
   homepage ""
@@ -10,6 +7,8 @@ class Sophus < Formula
 
   depends_on "cmake" => :build
   depends_on "eigen"
+
+  needs :cxx11
 
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
@@ -21,15 +20,17 @@ class Sophus < Formula
   end
 
   test do
-    # `test do` will create, run in and delete a temporary directory.
-    #
-    # This test will fail and we won't accept that! For Homebrew/homebrew-core
-    # this will need to be a test that verifies the functionality of the
-    # software. Run the test with `brew test Sophus`. Options passed
-    # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
-    #
-    # The installed folder is not in the path, so use the entire path to any
-    # executables being tested: `system "#{bin}/program", "do", "something"`.
-    system "false"
+    (testpath/"test.cpp").write <<~EOS
+      #include <sophus/so2.hpp>
+      #include <iostream>
+      int main(){
+        Sophus::SO2d so2d{1.0, 0.0};
+        std::cout << so2d.log() << std::endl;
+        return 0;
+      }
+    EOS
+    eigen_include = shell_output("brew --prefix").strip + "/opt/eigen/include/eigen3"
+    system ENV.cxx, "test.cpp", "-I#{include}", "-I#{eigen_include}", "-std=c++11", "-o", "test"
+    assert_equal %w[0], shell_output("./test").split
   end
 end
