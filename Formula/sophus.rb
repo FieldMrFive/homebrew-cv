@@ -8,8 +8,6 @@ class Sophus < Formula
   depends_on "cmake" => :build
   depends_on "eigen"
 
-  needs :cxx11
-
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
     mkdir "build" do
